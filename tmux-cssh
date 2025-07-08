@@ -98,20 +98,22 @@ fi
 
 # Open a new session and split into new panes for each SSH session
 for host in ${hosts}; do
+  cmd="echo Trying ${host}... >&2; ssh ${ssh_options} ${host}"
+
   if ! tmux has-session -t "${tmux_session}" 2>/dev/null; then
-    tmux new-session -s "${tmux_session}" -d "ssh ${ssh_options} ${host}"
+    tmux new-session -s "${tmux_session}" -d "${cmd}"
   elif [ "${tmux_attach_current_session}" = "true" ]; then
     if ! tmux list-windows -F "#W" | grep -q "${tmux_window}" >/dev/null; then
       # shellcheck disable=SC2086
-      tmux new-window ${tmux_window_options} "ssh ${ssh_options} ${host}"
+      tmux new-window ${tmux_window_options} "${cmd}"
     else
-      tmux split-window -t "${tmux_window}" -d "ssh ${ssh_options} ${host}"
+      tmux split-window -t "${tmux_window}" -d "${cmd}"
       # We have to reset the layout after each new pane otherwise the panes
       # quickly become too small to spawn any more
       tmux select-layout -t "${tmux_session}" tiled
     fi
   else
-    tmux split-window -t "${tmux_session}" -d "ssh ${ssh_options} ${host}"
+    tmux split-window -t "${tmux_session}" -d "${cmd}"
     # We have to reset the layout after each new pane otherwise the panes
     # quickly become too small to spawn any more
     tmux select-layout -t "${tmux_session}" tiled
