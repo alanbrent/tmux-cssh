@@ -67,12 +67,18 @@ while tmux has-session -t "${tmux_name}-${n}" 2>/dev/null; do n=$((n + 1)); done
 tmux_session="${tmux_name}-${n}"
 
 if [ "${tmux_attach_current_session}" = "true" ]; then
-  tmux_session="$(tmux display-message -p '#S')"
-  # Find a name for a new window
-  n=0
-  while tmux list-windows -F "#W" | grep -q "${tmux_name}-${n}" 2>/dev/null; do n=$((n + 1)); done
-  tmux_window="${tmux_name}-${n}"
-  tmux_window_options="-n ${tmux_window}"
+  # Check if we're actually in a tmux session
+  if [ -n "${TMUX}" ]; then
+    tmux_session="$(tmux display-message -p '#S')"
+    # Find a name for a new window
+    n=0
+    while tmux list-windows -F "#W" | grep -q "${tmux_name}-${n}" 2>/dev/null; do n=$((n + 1)); done
+    tmux_window="${tmux_name}-${n}"
+    tmux_window_options="-n ${tmux_window}"
+  else
+    # No current tmux session, behave as if -c was not passed
+    tmux_attach_current_session="false"
+  fi
 fi
 
 # If host doesn't look like a DNS name, it may be a CSSH cluster
